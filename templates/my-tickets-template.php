@@ -5,13 +5,13 @@
             <h3 class="title">تیکت‌های پشتیبانی</h3>
         </div>
 
-        <div class="ctm-section-container">
+        <div class="ctm-section-container" data-account="<?= $account_id ?>">
             <div class="section-container-inner">
 
                 <div class="ctm-section-header">
                     <div class="section-header-inner">
                         <h4 class="header-title">همه تیکت‌ها</h4>
-                        <a href="" class="crm-new-ticket">ارسال تیکت جدید</a>
+                        <a href="<?= site_url('/my-tickets/new-ticket') ?>" class="ctm-new-ticket">ارسال تیکت جدید</a>
                     </div>
                 </div>
 
@@ -34,84 +34,65 @@
 
                 <div class="ctm-filters-container">
                     <div class="filters-container-inner">
-                        <span class="tickets-total-count">نمایش <?= $this->tickets_statuses['all']['count'] ?> تیکت</span>
+                        <span class="tickets-total-count">نمایش <span>۰</span> تا <span>۱۰</span> از <?= $this->tickets_statuses['all']['count'] ?> تیکت</span>
                         <div class="tickets-filters">
-                            <div class="tickets-filters-inner">
+                            <form id="tickets-filters-form" class="tickets-filters-inner">
+                                <input type="hidden" name='action' value="sort_tickets">
+                                <input type="hidden" name="my_nonce" value="<?= wp_create_nonce('filter_sort_nonce'); ?>">
                                 <?php foreach($this->filters as $type=>$filters) : ?>
                                 <select name="<?= $type ?>" class="<?= $type ?>-filter">
-                                    <?php foreach($filters as $status=>$val) : ?>
-                                        <option value="<?= $status ?>"><?php echo $val['status']; if($type != 'by_date') echo ' (' . $val['count'] . ')'; ?></option>
+                                    <?php foreach($filters as $status=>$val) : 
+                                    $option = esc_html($val['status']);
+                                    if($type != 'by_date') $option .= ' (' . esc_html($val['count']) . ')';
+                                    ?>
+                                        <option value="<?= $status ?>"><?= $option ?></option>
                                     <?php endforeach; ?>
                                 </select>
                                 <?php endforeach; ?>
-                                <button class="submit-filters">صافی</button>
-                            </div>
+                                <input type="submit" class="submit-filters" id="submit-filters" value="صافی">
+                            </form>
                         </div>
                     </div>
                 </div>
 
                 <div class="ctm-tickets-list">
                     <div class="tickets-list-inner">
-                    <?php if(isset($fetched_tickets) AND !empty($fetched_tickets)) : ?>
-                        <?php foreach($fetched_tickets as $ticket) : ?>
-                        <div class="ctm-ticket-item ticket-item-<?= esc_attr($ticket['id']) . ' ' . esc_attr($ticket['status']) ?>" id="ctm-ticket-<?=esc_attr($ticket['id'])?>">
-                            <div class="ticket-item-inner">
-
-                                <div class="ctm-item-title">
-                                    <div class="item-title-inner">
-                                        <a href="<?= site_url() . '/my-tickets/ticket-' ?>" class="ctm-ticket-title"><?= esc_html($ticket['title']) ?></a>
-                                        <div class="ticket-id">
-                                            <svg xmlns="http://www.w3.org/2000/svg" id="Capa_1" enable-background="new 0 0 515.555 515.555" height="512" viewBox="0 0 515.555 515.555" width="512"><g><path d="m303.347 18.875c25.167 25.167 25.167 65.971 0 91.138s-65.971 25.167-91.138 0-25.167-65.971 0-91.138c25.166-25.167 65.97-25.167 91.138 0" data-original="#000000" class="active-path" style="fill:#8D99A9" data-old_color="#000000"/><path d="m303.347 212.209c25.167 25.167 25.167 65.971 0 91.138s-65.971 25.167-91.138 0-25.167-65.971 0-91.138c25.166-25.167 65.97-25.167 91.138 0" data-original="#000000" class="active-path" style="fill:#8D99A9" data-old_color="#000000"/><path d="m303.347 405.541c25.167 25.167 25.167 65.971 0 91.138s-65.971 25.167-91.138 0-25.167-65.971 0-91.138c25.166-25.167 65.97-25.167 91.138 0" data-original="#000000" class="active-path" style="fill:#8D99A9" data-old_color="#000000"/></g></svg>
-                                            شماره تیکت:‌<span><?= esc_html($ticket['id']) ?></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="ctm-item-support">
-                                    <div class="item-support-inner">
-                                        <div class="support-img <?=esc_attr($ticket['support-id'])?>"></div>
-                                        <span class="support-name"><?=$ticket['support']?></span>
-                                        <div class="has-notification">
-                                            <?php if($ticket['is_read'] === false) echo '<span></span>'; ?>
-                                            <svg xmlns="http://www.w3.org/2000/svg" id="Outlined" viewBox="0 0 32 32"><title/><g id="Fill"><path d="M26,3H6A3,3,0,0,0,3,6V30.41l5.12-5.12A1.05,1.05,0,0,1,8.83,25H26a3,3,0,0,0,3-3V6A3,3,0,0,0,26,3Zm1,19a1,1,0,0,1-1,1H8.83a3,3,0,0,0-2.12.88L5,25.59V6A1,1,0,0,1,6,5H26a1,1,0,0,1,1,1Z"/><rect height="2" width="12" x="10" y="11"/><rect height="2" width="7" x="10" y="15"/></g></svg>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="ctm-ticket-importance">
-                                    <div class="ticket-importance-inner">
-                                        <div>اهمیت:‌ <span><?=$ticket['importance_name']?></span></div>
-                                        <div class="ctm-rating"><?php for($i=0; $i<intval($ticket['importance']); $i++) :?><span></span><?php endfor; ?></div>
-                                    </div>
-                                </div>
-
-                                <div class="ctm-ticket-status">
-                                    <div class="ticket-status-inner <?=esc_attr($ticket['status'])?>">
-                                        <span class="status-color"></span>
-                                        <span class="ticket-status"><?=esc_html($this->tickets_statuses[$ticket['status']]['status'])?></span>
-                                    </div>
-                                </div>
-
-                                <div class="ctm-ticket-date">
-                                    <div class="ticket-date-inner">
-                                        <span class="ticket-answered-date" dir="ltr"><?=$ticket['date']?></span>
-                                        <div class="ticket-created-date" title="<?=esc_attr($ticket['modified'])?>">آخرین اقدام:  <span><?=esc_html($ticket['modified_status'])?></span></div>
-                                    </div>
-                                </div>
-
-                                <div class="ctm-view-ticket">
-                                    <div class="view-ticket-inner">
-                                        <a href="<?= esc_url(site_url() . '/my-tickets/ticket-' . $ticket['id']) ?>" class="btn view-ticket-">مشاهده تیکت</a>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                    <?php if(isset($this->user_tickets) AND !empty($this->user_tickets)) {
+                        foreach($this->user_tickets as $i=>$ticket) {
+                            if($i > 9) break;
+                            include CTM_TEMPLATES_PATH . 'sections/ticket-item.php';
+                        }
+                    } ?>
                     </div>
                 </div>
 
+                <div class="ctm-pagination" id="ctm-pagination">
+                    <span class="page-num" style="display: none;">1</span>
+                    <div class="prev-page"><< قبلی</div>
+
+                    <?php if($ticket_pages > 10) : ?>
+
+                        <div class="first-pages">
+                        <?php for($i = 1; $i <= 3; $i++) : ?>
+                            <div data-id="<?= $i ?>" class="ctm-page-<?= $i ?> <?php if($i==1) echo 'active' ?>"><?= parent::translate_nums($i) ?></div>
+                        <?php endfor; ?>
+                        </div>
+
+                        <div class="pagination-dots">...</div>
+
+                        <div class="last-pages">
+                        <?php for($i = $ticket_pages - 2; $i <= $ticket_pages; $i++) : ?>
+                            <div data-id="<?= $i ?>" class="ctm-page-<?= $i ?>"><?= parent::translate_nums($i) ?></div>
+                        <?php endfor; ?>
+                        </div>
+                        
+                    <?php else : ?>
+                        <?php for($i=1; $i <= $ticket_pages; $i++) : ?>
+                            <div data-id="<?= $i ?>" class="ctm-page-<?= $i ?> <?php if($i == 1) echo 'active'; ?>"><?= parent::translate_nums($i) ?></div>
+                        <?php endfor; ?>
+                    <?php endif; ?>
+                    <div class="next-page">بعدی >></div>
+                </div>
             </div>
         </div>
     </div>
